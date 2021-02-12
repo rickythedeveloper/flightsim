@@ -3,7 +3,7 @@ import numpy as np
 import matrix_op
 import matrix_check
 
-class FlightState():
+class FlightStatus():
     def __init__(self, forward_vect=None, roll=0.0, velocity=None, position=None, thrust=None, weight=9.81*1000):
         '''
         direction: 3D np unit vector of the nose direction

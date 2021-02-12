@@ -3,7 +3,7 @@ import random
 import matplotlib.pyplot as plt
 
 import matrix_op
-from flight import FlightState
+from flight import FlightStatus
 
 def test_rotation_around_arbitrary_axis():
     v = random_vect_4d(5) # vector direction around which the rotation happens
@@ -52,7 +52,7 @@ def test_left_vectors_and_up():
     '''Shows the forward vector and its associated left vectors for different values of roll'''
     forward_vect = np.array([random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1)])
     forward_vect = forward_vect / np.linalg.norm(forward_vect)
-    state = FlightState(forward_vect=forward_vect)
+    state = FlightStatus(forward_vect=forward_vect)
     x, y, z = [], [], []
     for roll in np.linspace(0, np.pi, 8):
         # roll = 0
