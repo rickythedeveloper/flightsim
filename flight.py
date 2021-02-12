@@ -4,14 +4,14 @@ import matrix_op
 import matrix_check
 
 class FlightStatus():
-    def __init__(self, forward_vect=None, roll=0.0, velocity=None, position=None, thrust=None, weight=9.81*1000):
+    def __init__(self, forward_vect=None, roll=0.0, velocity=None, position=None, thrust=None, weight=None):
         '''
         direction: 3D np unit vector of the nose direction
         roll: float indicating the roll (+ve: R, -ve: L)
         velocity: 3D np vector containing x,y,z speeds in m/s
         position: 3D np vector containing x,y,z positions m
         thrust: 3D np vector of the thrust force
-        weight: float that signifies the weight in N
+        weight: 3D np vector the weight in N
         '''
         if forward_vect is None:
             forward_vect = np.array([1,0,0])
@@ -21,6 +21,8 @@ class FlightStatus():
             position = np.zeros((3,))
         if thrust is None:
             thrust = np.zeros((3,))
+        if weight is None:
+            weight = np.array([0,0,-9.81])
         
         self.forward_vect = forward_vect
         self.roll = roll
@@ -28,6 +30,10 @@ class FlightStatus():
         self.position = position
         self.thrust = thrust
         self.weight = weight
+
+    def __str__(self):
+        return f'forward: {self.forward_vect}, roll: {self.roll}, angle of attack: {self.angle_attack * 180 / np.pi} deg\nvelocity: {self.velocity}\nthrust: {self.thrust}, weight: {self.weight}\nposition: {self.position}'
+
     @property
     def forward_vect(self):
         return self._forward_vect
@@ -59,7 +65,6 @@ class FlightStatus():
             x2 = np.array([0, 1, 0])
 
         # vectors perpendicular to the forward vector
-        # print(self.forward_vect, x1, x2)
         p1, p2 = np.cross(self.forward_vect, x1), np.cross(self.forward_vect, x2)
 
         # combinations of the two can express any vector in that plane.
@@ -96,3 +101,84 @@ class FlightStatus():
     def up_vect(self):
         return np.cross(self.forward_vect, self.left_vect)
 
+    @property
+    def angle_attack(self):
+        vz = np.dot(self.up_vect, self.velocity)
+        vx = np.dot(self.forward_vect, self.velocity)
+        alpha = - np.arctan(vz/vx)
+        return alpha
+
+    def air_velocity(self, wind):
+        return self.velocity - wind
+
+class Environment():
+    def __init__(self):
+        return
+
+    def wind(self, position):
+        return np.array([1,2,0])
+
+    def air_density(self, position):
+        return 0.4135
+
+class FlyingObject():
+    def __init__(self, status: FlightStatus, env: Environment):
+        self.status = status
+        self.env = env
+
+    @property
+    def net_force(self):
+        raise NotImplementedError('The net force calculation has to be implemented.')
+
+    
+class Airplane(FlyingObject):
+    def __init__(self, status: FlightStatus, env: Environment, wing_area):
+        super().__init__(status, env)
+        self.wing_area = wing_area
+
+    @property
+    def status_str(self):
+        return f'{self.status}\nlift: {self.lift}, lift coeff: {self.lift_coeff}\ndrag: {self.drag}, drag coeff: {self.drag_coeff}'
+
+    @property
+    def drag_coeff(self):
+        '''Returns the drag coefficient for angle of attack alpha'''
+        return 0.10
+
+    @property
+    def drag(self):
+        '''3D vector of the drag force in N'''
+        air_v = self.status.air_velocity(self.env.wind(self.status.position))
+        rho = self.env.air_density(self.status.position)
+        mag = self.drag_coeff * 0.5 * rho * np.linalg.norm(air_v)**2 * self.wing_area
+        unit_vect = - air_v / np.linalg.norm(air_v)
+        return mag * unit_vect
+
+    @property
+    def lift_coeff(self):
+        alpha = self.status.angle_attack
+        alpha_deg = alpha * 180 / np.pi
+        if alpha_deg < 15:
+            gradient = 1.50 / 20
+            coeff = gradient * (alpha_deg - (-5))
+        else:
+            gradient = -1.50 / 20
+            coeff = 1.75 + gradient * (alpha_deg - 15)
+
+        coeff = max(coeff, 0)
+        return coeff
+
+    @property
+    def lift(self):
+        '''3D vector of the lift force in N'''
+        air_v = self.status.air_velocity(self.env.wind(self.status.position))
+        rho = self.env.air_density(self.status.position)
+        mag = self.lift_coeff * 0.5 * rho * np.linalg.norm(air_v)**2 * self.wing_area
+        direction = np.cross(air_v, self.status.left_vect)
+        unit_vect = direction / np.linalg.norm(direction)
+        return mag * unit_vect
+
+    @property
+    def net_force(self):
+        f = self.status.thrust + self.status.weight + self.lift + self.drag
+        return f

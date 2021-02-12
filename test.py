@@ -3,7 +3,7 @@ import random
 import matplotlib.pyplot as plt
 
 import matrix_op
-from flight import FlightStatus
+from flight import FlightStatus, Airplane, Environment
 
 def test_rotation_around_arbitrary_axis():
     v = random_vect_4d(5) # vector direction around which the rotation happens
@@ -81,8 +81,44 @@ def test_left_vectors_and_up():
             ax.plot3D(*zip(s,e), color="b")
 
     plt.show()
+    
+def test_lift_drag():
+    status = FlightStatus(velocity=np.array([250,0,0]), weight=np.array([0,0,-9.81*168000]))
+    env = Environment()
+    aircraft = Airplane(status, env, 418)
+    for pitch in np.linspace(-np.pi/10, np.pi/5, 20):
+        aircraft.status.forward_vect = np.array([1,0,np.tan(pitch)])
+        aircraft.status.forward_vect = aircraft.status.forward_vect / np.linalg.norm(aircraft.status.forward_vect)
+        aircraft.status.thrust = aircraft.status.forward_vect * 9.81 * 42637.683
+        print(aircraft.status_str)
 
+        lift = aircraft.lift
+        drag = aircraft.drag
+        thrust = aircraft.status.thrust
+        weight = aircraft.status.weight
+
+        # plot forces
+        fig = plt.figure()
+        f_plot = fig.add_subplot(111, projection='3d')
+
+        vects = [lift, drag, thrust, weight]
+        colors = ['blue', 'red', 'green', 'black']
+        max_norm = 0
+        for vect, color in zip(vects, colors):
+            max_norm = max(max_norm, np.linalg.norm(vect))
+            f_plot.quiver(0, 0, 0, vect[0], vect[1], vect[2], normalize=False, color=color)
+        f_plot.set_xlabel('x')
+        f_plot.set_ylabel('y')
+        f_plot.set_zlabel('z')
+
+        # draw a cube large enough to hopefully make the axes equally scaled
+        r = [-max_norm, max_norm]
+        from itertools import product, combinations
+        for s, e in combinations(np.array(list(product(r,r,r))), 2):
+            if np.sum(np.abs(s-e)) == r[1]-r[0]:
+                f_plot.plot3D(*zip(s,e), color="b")
+
+        plt.show()
 
 if __name__ == '__main__':
-    for n in range(10):
-        test_left_vectors_and_up()
+    test_lift_drag()
