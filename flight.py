@@ -4,14 +4,14 @@ import matrix_op
 import matrix_check
 
 class FlightStatus():
-    def __init__(self, forward_vect=None, roll=0.0, velocity=None, position=None, thrust=None, weight=None):
+    def __init__(self, forward_vect=None, roll=0.0, velocity=None, position=None, thrust=None, mass=1000):
         '''
         direction: 3D np unit vector of the nose direction
         roll: float indicating the roll (+ve: R, -ve: L)
         velocity: 3D np vector containing x,y,z speeds in m/s
         position: 3D np vector containing x,y,z positions m
         thrust: 3D np vector of the thrust force
-        weight: 3D np vector the weight in N
+        mass: mass of the flying object in kg
         '''
         if forward_vect is None:
             forward_vect = np.array([1,0,0])
@@ -21,18 +21,21 @@ class FlightStatus():
             position = np.zeros((3,))
         if thrust is None:
             thrust = np.zeros((3,))
-        if weight is None:
-            weight = np.array([0,0,-9.81])
         
         self.forward_vect = forward_vect
         self.roll = roll
         self.velocity = velocity
         self.position = position
         self.thrust = thrust
-        self.weight = weight
+        self.mass = mass
 
     def __str__(self):
         return f'forward: {self.forward_vect}, roll: {self.roll}, angle of attack: {self.angle_attack * 180 / np.pi} deg\nvelocity: {self.velocity}\nthrust: {self.thrust}, weight: {self.weight}\nposition: {self.position}'
+
+    @property
+    def weight(self):
+        g = 9.81
+        return np.array([0,0,self.mass*g])
 
     @property
     def forward_vect(self):
@@ -101,10 +104,9 @@ class FlightStatus():
     def up_vect(self):
         return np.cross(self.forward_vect, self.left_vect)
 
-    @property
-    def angle_attack(self):
-        vz = np.dot(self.up_vect, self.velocity)
-        vx = np.dot(self.forward_vect, self.velocity)
+    def angle_attack(self, wind):
+        vz = np.dot(self.up_vect, self.air_velocity(wind))
+        vx = np.dot(self.forward_vect, self.air_velocity(wind))
         alpha = - np.arctan(vz/vx)
         return alpha
 

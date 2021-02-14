@@ -83,7 +83,7 @@ def test_left_vectors_and_up():
     plt.show()
     
 def test_lift_drag():
-    status = FlightStatus(velocity=np.array([250,0,0]), weight=np.array([0,0,-9.81*168000]))
+    status = FlightStatus(velocity=np.array([250,0,0]), mass=168000)
     env = Environment()
     aircraft = Airplane(status, env, 418)
     for pitch in np.linspace(-np.pi/10, np.pi/5, 20):

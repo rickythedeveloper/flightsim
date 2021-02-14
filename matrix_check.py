@@ -23,7 +23,7 @@ def are_equal(x1, x2):
 
 def are_equal_vectors(v1, v2):
     for n in range(3):
-        if not are_equal(v1[n][0], v2[n][0]):
+        if not are_equal(v1[n], v2[n]):
             return False
     return True
 
