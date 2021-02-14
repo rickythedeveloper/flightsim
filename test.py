@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 import matrix_op
 from flight import FlightStatus, Airplane, Environment
+from simulator import Simulator
 
 def test_rotation_around_arbitrary_axis():
     v = random_vect_4d(5) # vector direction around which the rotation happens
@@ -120,5 +121,14 @@ def test_lift_drag():
 
         plt.show()
 
+
+def start_simulator():
+    plane = Airplane.default_airplane()
+    sim = Simulator(plane)
+    sim.start(print_status=True)
+
+
 if __name__ == '__main__':
-    test_lift_drag()
+    # test_lift_drag()
+    start_simulator()
+    pass

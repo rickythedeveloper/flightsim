@@ -26,15 +26,6 @@ class TestFlightStatus(unittest.TestCase):
         self.assertTrue(are_equal(0, np.dot(forward_vect, up_vect)))
         self.assertTrue(are_equal(0, np.dot(up_vect, left_vect)))
 
-    def test_angle_attack(self):
-        self.flightstatus.forward_vect = np.array([1,0,0])
-        self.flightstatus.roll = 0
-        wind = np.array([0, 0, 250])
-        air_velocity = self.flightstatus.air_velocity(wind)
-        alpha = self.flightstatus.angle_attack(wind)
-        self.assertTrue(are_equal_vectors(air_velocity, np.array([250, 0, -250])))
-        self.assertEqual(np.pi/4, alpha)
-
     def test_aa(self):
         self.assertEqual(1,1)
 

@@ -30,12 +30,12 @@ class FlightStatus():
         self.mass = mass
 
     def __str__(self):
-        return f'forward: {self.forward_vect}, roll: {self.roll}, angle of attack: {self.angle_attack * 180 / np.pi} deg\nvelocity: {self.velocity}\nthrust: {self.thrust}, weight: {self.weight}\nposition: {self.position}'
+        return f'forward: {self.forward_vect}, roll: {self.roll}, velocity: {self.velocity}, thrust: {self.thrust}, weight: {self.weight}, position: {self.position}'
 
     @property
     def weight(self):
         g = 9.81
-        return np.array([0,0,self.mass*g])
+        return np.array([0,0,-self.mass*g])
 
     @property
     def forward_vect(self):
@@ -104,15 +104,6 @@ class FlightStatus():
     def up_vect(self):
         return np.cross(self.forward_vect, self.left_vect)
 
-    def angle_attack(self, wind):
-        vz = np.dot(self.up_vect, self.air_velocity(wind))
-        vx = np.dot(self.forward_vect, self.air_velocity(wind))
-        alpha = - np.arctan(vz/vx)
-        return alpha
-
-    def air_velocity(self, wind):
-        return self.velocity - wind
-
 class Environment():
     def __init__(self):
         return
@@ -132,11 +123,29 @@ class FlyingObject():
     def net_force(self):
         raise NotImplementedError('The net force calculation has to be implemented.')
 
+    @property
+    def acceleration(self):
+        return self.net_force / self.status.mass
+
     
 class Airplane(FlyingObject):
     def __init__(self, status: FlightStatus, env: Environment, wing_area):
         super().__init__(status, env)
         self.wing_area = wing_area
+
+    @classmethod
+    def default_airplane(cls):
+        forward_vect = np.array([1.0,0.0,0.0])
+        roll = 0
+        velocity = np.array([200.0, 0.0, 0.0])
+        position = np.array([0.0, 0.0, 10000.0])
+        thrust = forward_vect * 330000.0
+        mass = 168000.0
+        status = FlightStatus(forward_vect, roll, velocity, position, thrust, mass)
+        env = Environment()
+        wing_area = 420.0
+        plane = Airplane(status, env, wing_area)
+        return plane
 
     @property
     def status_str(self):
@@ -150,7 +159,7 @@ class Airplane(FlyingObject):
     @property
     def drag(self):
         '''3D vector of the drag force in N'''
-        air_v = self.status.air_velocity(self.env.wind(self.status.position))
+        air_v = self.air_velocity
         rho = self.env.air_density(self.status.position)
         mag = self.drag_coeff * 0.5 * rho * np.linalg.norm(air_v)**2 * self.wing_area
         unit_vect = - air_v / np.linalg.norm(air_v)
@@ -158,7 +167,7 @@ class Airplane(FlyingObject):
 
     @property
     def lift_coeff(self):
-        alpha = self.status.angle_attack
+        alpha = self.angle_attack
         alpha_deg = alpha * 180 / np.pi
         if alpha_deg < 15:
             gradient = 1.50 / 20
@@ -173,7 +182,7 @@ class Airplane(FlyingObject):
     @property
     def lift(self):
         '''3D vector of the lift force in N'''
-        air_v = self.status.air_velocity(self.env.wind(self.status.position))
+        air_v = self.air_velocity
         rho = self.env.air_density(self.status.position)
         mag = self.lift_coeff * 0.5 * rho * np.linalg.norm(air_v)**2 * self.wing_area
         direction = np.cross(air_v, self.status.left_vect)
@@ -184,3 +193,22 @@ class Airplane(FlyingObject):
     def net_force(self):
         f = self.status.thrust + self.status.weight + self.lift + self.drag
         return f
+
+    @property
+    def angle_attack(self):
+        vz = np.dot(self.status.up_vect, self.air_velocity)
+        vx = np.dot(self.status.forward_vect, self.air_velocity)
+        alpha = - np.arctan(vz/vx)
+        return alpha
+
+    @property
+    def air_velocity(self):
+        wind = self.env.wind(self.status.position)
+        return self.status.velocity - wind
+
+    @property
+    def velocity_pitch(self):
+        horizontal_v = np.sqrt(self.status.velocity[0]**2 + self.status.velocity[1]**2)
+        vertical_v = self.status.velocity[2]
+        pitch = np.arctan(vertical_v / horizontal_v)
+        return pitch
