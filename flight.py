@@ -38,6 +38,15 @@ class FlightStatus():
         return np.array([0,0,-self.mass*g])
 
     @property
+    def roll(self):
+        return self._roll
+
+    @roll.setter
+    def roll(self, angle):
+        self._left_vect = None
+        self._roll = angle
+
+    @property
     def forward_vect(self):
         return self._forward_vect
 
@@ -48,9 +57,17 @@ class FlightStatus():
             print(f'forward_vect is not normalised (norm={norm}). But we will normalise it and proceed.')
         self._forward_vect = vect / norm
 
+        # remove all cached data dependent on forward vect
+        self._left_vect_no_roll = None
+        self._left_vect = None
+
     @property
     def left_vect_no_roll(self):
         '''The left vector of the object if the roll were zero'''
+        # if cached, return immediately
+        if self._left_vect_no_roll is not None:
+            return self._left_vect_no_roll
+
         # to find two vectors that sit on the plane perpendicular to forward vecror,
         # we need two arbitrary vectors that are not parallel to the forward vector.
         assert not matrix_check.is_zero_vector_3d(self.forward_vect), 'the forward vector cannot be a zero vector'
@@ -86,19 +103,24 @@ class FlightStatus():
         left_vect_roll_zero = left_vect_roll_zero / np.linalg.norm(left_vect_roll_zero)
 
         assert matrix_check.are_perp(left_vect_roll_zero, self.forward_vect), f'left_vect_roll_zero dot forward_vect is non-zero (= {np.dot(left_vect_roll_zero, self.forward_vect)})'
+        self._left_vect_no_roll = left_vect_roll_zero
         return left_vect_roll_zero
 
     @property
     def left_vect(self):
         '''The left vector of the object.'''
+        # if cached, return immediately
+        if self._left_vect is not None:
+            return self._left_vect
+        
         origin = np.array([0, 0, 0]).T
         current_left_vect = matrix_op.rotate_arb_axis(origin, self.forward_vect, self.roll).dot(matrix_op.vect_3dto4d(self.left_vect_no_roll))
         current_left_vect = matrix_op.vect_column_2_row(matrix_op.vect_4dto3d(current_left_vect))
         current_left_vect = current_left_vect / np.linalg.norm(current_left_vect)
         assert matrix_check.is_normalised(current_left_vect), f'left vect is not normalised. This is an internal problem. norm={np.linalg.norm.norm(current_left_vect)}'
         assert matrix_check.are_perp(current_left_vect, self.forward_vect), f'left_vect dot forward_vect is non-zero (= {np.dot(current_left_vect, self.forward_vect)})'
+        self._left_vect = current_left_vect
         return current_left_vect
-
 
     @property
     def up_vect(self):
