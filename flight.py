@@ -135,9 +135,9 @@ class Airplane(FlyingObject):
 
     @classmethod
     def default_airplane(cls):
-        forward_vect = np.array([1.0,0.0,0.0])
+        forward_vect = np.array([1.0,0.0,0.2])
         roll = 0
-        velocity = np.array([200.0, 0.0, 0.0])
+        velocity = np.array([200.0, 0.0, -10])
         position = np.array([0.0, 0.0, 10000.0])
         thrust = forward_vect * 330000.0
         mass = 168000.0

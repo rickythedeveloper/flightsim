@@ -1,6 +1,8 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import mpl_toolkits.mplot3d.axes3d as p3
+from matplotlib import animation
 
 import matrix_op
 from flight import FlightStatus, Airplane, Environment
@@ -127,8 +129,46 @@ def start_simulator():
     sim = Simulator(plane)
     sim.start(print_status=True)
 
+def test_sim_predict():
+    plane = Airplane.default_airplane()
+    sim = Simulator(plane)
+    data_fields = ['thrust', 'weight', 'lift', 'drag']
+    dt = 0.10
+    t_max = 10
+    data = sim.predict(data_fields, dt, t_max)
+
+    fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
+    quivers = []
+    max_norm = 0
+    for data_field in data_fields:
+        data_for_field = data[data_field]
+        quiver = ax.quiver(0, 0, 0, *data_for_field[0])
+        quivers.append(quiver)
+
+        for datum in data_for_field:
+            norm = np.linalg.norm(datum)
+            if norm > max_norm:
+                max_norm = norm
+
+    ax.set_xlim(-max_norm, max_norm)
+    ax.set_ylim(-max_norm, max_norm)
+    ax.set_zlim(-max_norm, max_norm)
+
+    def update(n):
+        for quiver in quivers:
+            quiver.remove()
+
+        quivers.clear()
+
+        for data_field in data_fields:
+            data_for_field = data[data_field]
+            quiver = ax.quiver(0, 0, 0, *data_for_field[n])
+            quivers.append(quiver)
+
+    ani = animation.FuncAnimation(fig, update, frames=int(t_max/dt), interval=dt*1000)
+    plt.show()
+
 
 if __name__ == '__main__':
-    # test_lift_drag()
-    start_simulator()
+    test_sim_predict()
     pass
