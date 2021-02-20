@@ -27,6 +27,16 @@ def are_equal_vectors(v1, v2):
             return False
     return True
 
+def are_equal_matrices(a1, a2):
+    if a1.shape != a2.shape:
+        return False
+    shape = a1.shape
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            if not are_equal(a1[i, j], a2[i, j]):
+                return False
+    return True
+
 def is_indentity(matrix):
     for index, entry in np.ndenumerate(matrix):
         i = index[0]
