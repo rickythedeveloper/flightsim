@@ -70,7 +70,7 @@ class FlightStatus():
 
         # to find two vectors that sit on the plane perpendicular to forward vecror,
         # we need two arbitrary vectors that are not parallel to the forward vector.
-        assert not matrix_check.is_zero_vector_3d(self.forward_vect), 'the forward vector cannot be a zero vector'
+        assert not matrix_check.is_zero_vector(self.forward_vect), 'the forward vector cannot be a zero vector'
         if self.forward_vect[0] == 0 and self.forward_vect[1]:
             x1 = np.array([1, 0, 0])
             x2 = np.array([0, 1, 0])

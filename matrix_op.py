@@ -62,7 +62,9 @@ def rotate_arb_axis(p: np.ndarray, v: np.ndarray, alpha: float) -> np.ndarray:
     p = vect_3dto4d(p)
     v = vect_3dto4d(v)
     assert p.shape == (4, 1) and v.shape == (4, 1), f'wrong shape in either p or v: p:{p.shape}, v:{v.shape}'
-    assert not matrix_check.is_all_zeros(v), f'v should not be a zero vector. v:{v}'
+    if matrix_check.is_zero_vector(v):
+        print(f'v should not be a zero vector when rotating around it. We will proceed by not rotating. v:{v}')
+        return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
 
     vx = v[0][0]
     vy = v[1][0]
@@ -89,7 +91,7 @@ def rotate_arb_axis(p: np.ndarray, v: np.ndarray, alpha: float) -> np.ndarray:
     # print('translate')
     alignmentMat = translate_4d(-p)
     # print(alignmentMat.dot(axis_endpoint))
-    assert matrix_check.is_on_origin(alignmentMat.dot(p)), 'the alignment matrix does not align p onto the origin'
+    assert matrix_check.is_on_origin(alignmentMat.dot(p)), f'the alignment matrix does not align p onto the origin\nalignment matrix:\n{alignmentMat},\np:\n{p},\nresult:\n{alignmentMat.dot(p)}'
 
     # rotate around z axis to align the vector onto the xz plane
     # print(f'rotate around z {z_rot_angle * 180 / np.pi}')
@@ -102,7 +104,7 @@ def rotate_arb_axis(p: np.ndarray, v: np.ndarray, alpha: float) -> np.ndarray:
     # print(f'rotate around y by {y_rot_angle * 180 / np.pi}')
     alignmentMat = rotate_y_4d(y_rot_angle).dot(alignmentMat)
     # print(alignmentMat.dot(axis_endpoint))
-    assert matrix_check.is_on_origin(alignmentMat.dot(p)), 'the alignment matrix does not align p onto the origin'
+    assert matrix_check.is_on_origin(alignmentMat.dot(p)), f'the alignment matrix does not align p onto the origin\nalignment matrix:\n{alignmentMat},\np:\n{p},\nresult:\n{alignmentMat.dot(p)}'
     assert matrix_check.is_on_xaxis(alignmentMat.dot(axis_endpoint)), f'the alignment matrix does not align p+v onto x axis \nalignmentMat\n. {axis_endpoint}\n= {alignmentMat.dot(axis_endpoint)}'
 
     # rotate around x axis as required by alpha or -alpha
