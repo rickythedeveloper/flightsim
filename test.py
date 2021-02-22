@@ -7,6 +7,7 @@ from matplotlib import animation
 import matrix_op
 from flight import FlightStatus, Airplane, Environment
 from simulator import Simulator
+from plots import plot_scatter_animation_3d
 
 def test_rotation_around_arbitrary_axis():
     v = random_vect_4d(5) # vector direction around which the rotation happens
@@ -168,7 +169,33 @@ def test_sim_predict():
     ani = animation.FuncAnimation(fig, update, frames=int(t_max/dt), interval=dt*1000)
     plt.show()
 
+def test_rotation_animation():
+    masses = [
+        PointMass(1, np.array([0,0,0.1])),
+        PointMass(1, np.array([1,0,-0.1]))
+    ]
+    ang_velocity = np.array([5,0,0])
+    body = PhysicsBody(masses, np.array([0,0,0]), ang_velocity)
+
+    motion_data = []
+
+    motion_data.append([]) # for t = 0
+    for point_mass in body.masses:
+        motion_data[0].append(point_mass.position.copy())
+        
+    dt = 0.1
+    n_times = 1000
+    for _ in range(n_times):
+        body.time_march(dt)
+
+        motion_data.append([])
+        for point_mass in body.masses:
+            motion_data[-1].append(point_mass.position.copy())
+    
+    plot_scatter_animation_3d(motion_data, dt)
+
+
 
 if __name__ == '__main__':
-    test_sim_predict()
+    test_rotation_animation()
     pass
