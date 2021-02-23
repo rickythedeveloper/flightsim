@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -5,8 +6,10 @@ import mpl_toolkits.mplot3d.axes3d as p3
 from matplotlib import animation
 
 import matrix_op
+import matrix_check
 from flight import FlightStatus, Airplane, Environment
 from simulator import Simulator
+from mass_physics import PhysicsBody, PointMass, uniform_masses
 from plots import plot_scatter_animation_3d
 
 def test_rotation_around_arbitrary_axis():
@@ -194,8 +197,34 @@ def test_rotation_animation():
     
     plot_scatter_animation_3d(motion_data, dt)
 
+def test_rotation_box():
+    def is_in_box(point):
+        if point[0] > -10 and point[0] < 10:
+            if point[1] > -5 and point[1] < 5:
+                if point[2] > -3 and point[2] < 3:
+                    return True
+        return False
 
+    print('generating masses')
+    masses = uniform_masses(10, is_in_box, np.array([-10, -5, -3]), np.array([10,5,3]), 2)
+    print('generated masses')
+    body = PhysicsBody(masses, np.array([0,0,0]), np.array([1,0,0]))
+
+    print('time marching')
+    dt, t_final = 0.08, 15
+    n_iter = int(t_final/dt)
+    motion_data = []
+    for n in range(n_iter):
+        sys.stdout.flush()
+        print(f'{int(n/n_iter*100)}%', end='\r')
+        body.time_march(dt)
+        motion_data.append([])
+        for point_mass in body.masses:
+            motion_data[-1].append(point_mass.position.copy())
+    print('finished time marching')
+
+    plot_scatter_animation_3d(motion_data, dt)
 
 if __name__ == '__main__':
-    test_rotation_animation()
+    test_rotation_box()
     pass

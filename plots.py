@@ -46,7 +46,6 @@ def plot_scatter_animation_3d(data, dt):
     xs = np.array(xs)
     ys = np.array(ys)
     zs = np.array(zs)
-    print(xs, ys, zs)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
