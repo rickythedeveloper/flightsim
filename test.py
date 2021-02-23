@@ -198,17 +198,18 @@ def test_rotation_animation():
     plot_scatter_animation_3d(motion_data, dt)
 
 def test_rotation_box():
+    xmin, xmax, ymin, ymax, zmin, zmax = -10, 10, -5, 5, -3, 3
     def is_in_box(point):
-        if point[0] > -10 and point[0] < 10:
-            if point[1] > -5 and point[1] < 5:
-                if point[2] > -3 and point[2] < 3:
+        if point[0] > xmin and point[0] < xmax:
+            if point[1] > ymin and point[1] < ymax:
+                if point[2] > zmin and point[2] < zmax:
                     return True
         return False
 
     print('generating masses')
-    masses = uniform_masses(10, is_in_box, np.array([-10, -5, -3]), np.array([10,5,3]), 2)
+    masses = uniform_masses(10, is_in_box, np.array([xmin, ymin, zmin]), np.array([xmax,ymax,zmax]), 2)
     print('generated masses')
-    body = PhysicsBody(masses, np.array([0,0,0]), np.array([1,0,0]))
+    body = PhysicsBody(masses, np.array([0.3,0.5,0.6]), np.array([1,0,0]))
 
     print('time marching')
     dt, t_final = 0.08, 15
@@ -221,6 +222,7 @@ def test_rotation_box():
         motion_data.append([])
         for point_mass in body.masses:
             motion_data[-1].append(point_mass.position.copy())
+        motion_data[-1].append(body.centre_mass)
     print('finished time marching')
 
     plot_scatter_animation_3d(motion_data, dt)

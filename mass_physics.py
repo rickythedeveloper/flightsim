@@ -67,9 +67,9 @@ class PhysicsBody():
         for point_mass in self.masses:
             delta_position_translation = self.velocity * dt
             rotation = matrix_op.rotate_arb_axis(centre_mass, self.ang_velocity, np.linalg.norm(self.ang_velocity) * dt)
-            rotation = rotation[:3, :3]
-            delta_position_rotation = rotation.dot(point_mass.position) - point_mass.position
-            point_mass.position += delta_position_translation + delta_position_rotation
+            position_4d = matrix_op.vect_3dto4d(point_mass.position)
+            new_position_4d = rotation.dot(position_4d)
+            point_mass.position = matrix_op.vect_column_2_row(matrix_op.vect_4dto3d(new_position_4d)) + delta_position_translation
         
         # update angular velocity
         new_ang_inertia = self.ang_mom_inertia(self.centre_mass, self.ang_velocity)
@@ -77,7 +77,7 @@ class PhysicsBody():
 
         # print(f'centre mass\n{self.centre_mass}\nbodies\n{self.masses}\n')
         # if not matrix_check.are_equal_vectors(old_ang_vel, self.ang_velocity):
-        #     print(f'angular velocity changed during time march from {old_ang_vel} to {self.ang_velocity}')
+            # print(f'angular velocity changed during time march from {old_ang_vel} to {self.ang_velocity}')
 
         assert matrix_check.are_equal_vectors(old_ang_inertia * old_ang_vel, new_ang_inertia * self.ang_velocity), f'angular momentum changed from {old_ang_inertia * old_ang_vel} to {new_ang_inertia * self.ang_velocity} but it shouldnt change during a time march'
 
